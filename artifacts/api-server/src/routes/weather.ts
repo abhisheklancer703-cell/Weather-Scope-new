@@ -1,20 +1,33 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { weatherData } from "@workspace/db/schema";
-import { asc } from "drizzle-orm";
+import { asc, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
 
 router.get("/weather", async (req, res) => {
   try {
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS weather_data (
+        id SERIAL PRIMARY KEY,
+        date TIMESTAMP NOT NULL,
+        temperature REAL NOT NULL,
+        rainfall REAL NOT NULL,
+        humidity REAL NOT NULL
+      )
+    `);
+
     const records = await db
       .select()
       .from(weatherData)
       .orderBy(asc(weatherData.date));
 
     res.json(records);
+
   } catch (err) {
+
     req.log.error({ err }, "Failed to fetch weather data");
 
     res.status(500).json({
@@ -25,6 +38,17 @@ router.get("/weather", async (req, res) => {
 
 router.get("/weather/stats", async (req, res) => {
   try {
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS weather_data (
+        id SERIAL PRIMARY KEY,
+        date TIMESTAMP NOT NULL,
+        temperature REAL NOT NULL,
+        rainfall REAL NOT NULL,
+        humidity REAL NOT NULL
+      )
+    `);
+
     const records = await db.select().from(weatherData);
 
     if (!records || records.length === 0) {
@@ -139,7 +163,9 @@ router.get("/weather/stats", async (req, res) => {
 
       yearWiseTrends: cleanedTrends,
     });
+
   } catch (err) {
+
     console.error(err);
 
     req.log.error(
@@ -156,6 +182,17 @@ router.get("/weather/stats", async (req, res) => {
 
 router.post("/weather/upload", async (req, res) => {
   try {
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS weather_data (
+        id SERIAL PRIMARY KEY,
+        date TIMESTAMP NOT NULL,
+        temperature REAL NOT NULL,
+        rainfall REAL NOT NULL,
+        humidity REAL NOT NULL
+      )
+    `);
+
     const bodySchema = z.array(
       z.object({
         date: z.string(),
@@ -190,7 +227,9 @@ router.post("/weather/upload", async (req, res) => {
       message: "Upload successful",
       count: inserted.length,
     });
+
   } catch (err) {
+
     req.log.error({ err }, "Failed to upload data");
 
     res.status(500).json({
@@ -201,12 +240,15 @@ router.post("/weather/upload", async (req, res) => {
 
 router.delete("/weather/clear", async (req, res) => {
   try {
+
     await db.delete(weatherData);
 
     res.json({
       message: "All data cleared",
     });
+
   } catch (err) {
+
     req.log.error({ err }, "Failed to clear data");
 
     res.status(500).json({
@@ -217,6 +259,7 @@ router.delete("/weather/clear", async (req, res) => {
 
 router.post("/weather/predict", async (req, res) => {
   try {
+
     const { year, month } = req.body;
 
     if (!year || !month) {
@@ -336,7 +379,9 @@ router.post("/weather/predict", async (req, res) => {
       humidity: predictedHum,
       explanation,
     });
+
   } catch (err) {
+
     req.log.error({ err }, "Prediction failed");
 
     res.status(500).json({
@@ -346,9 +391,11 @@ router.post("/weather/predict", async (req, res) => {
 });
 
 router.get("/weather/:city", async (req, res) => {
+
   const city = req.params.city;
 
   try {
+
     const apiKey =
       process.env.WEATHER_API_KEY;
 
@@ -396,7 +443,9 @@ router.get("/weather/:city", async (req, res) => {
         data.current.feelslike_c,
       cloud: data.current.cloud,
     });
+
   } catch (err) {
+
     req.log.error(
       { err },
       "Weather fetch failed"
