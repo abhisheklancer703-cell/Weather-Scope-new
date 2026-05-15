@@ -14,7 +14,7 @@ export type WeatherRecord = {
   temperature: number;
   rainfall: number;
   humidity: number;
-};
+}; 
 
 export type WeatherStatsResponse = {
   totalRecords: number;
